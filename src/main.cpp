@@ -1,16 +1,12 @@
 #include "pch.h"
 #include <iostream>
 #include "assets.h"
+#include "utils.h"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void processInput(GLFWwindow* window);
 
 int width = 800, height = 600;
-float lastX = width / 2.0f;
-float lastY = height / 2.0f;
-bool firstMouse = true;
-Camera camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f), 60.f, (float) width / (float) height);
 
 int main() {
     glfwInit();
@@ -36,17 +32,23 @@ int main() {
     }
 
     glViewport(0, 0, width, height);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glEnable(GL_DEPTH_TEST);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, InputCallbackManager::cursorPosCallback);
+    
+    glfwSetKeyCallback(window, InputCallbackManager::keyCallback);
 
     TestModel testModel = TestModel();
     ShaderPipline shaderPipline = ShaderPipline("assets/shaders/vs.vs", "assets/shaders/fs.fs");
+    Camera camera = Camera(glm::vec3(0.f, 0.f, 3.f), 45.f, (float) width, (float) height);
 
-    glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    glm::mat4 model = glm::mat4(1.0f);
 
     while (!glfwWindowShouldClose(window)) {
+        Clock::UpdateDeltaTime();
+
         processInput(window);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -74,25 +76,4 @@ void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
-}
-
-void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
-{
-    float xpos = static_cast<float>(xposIn);
-    float ypos = static_cast<float>(yposIn);
-
-    if (firstMouse)
-    {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
-
-    float xoffset = xpos - lastX;
-    float yoffset = ypos - lastY;
-
-    lastX = xpos;
-    lastY = ypos;
-
-    camera.processMouseMovement(xoffset, yoffset);
 }

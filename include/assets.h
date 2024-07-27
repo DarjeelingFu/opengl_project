@@ -33,16 +33,17 @@ private:
 
 class Camera {
 public:
-    Camera(glm::vec3 position, float fov,  float aspectRatio);
+    Camera(glm::vec3 position, float fov,  float width, float height);
 
     glm::mat4 getViewMatrix();
     glm::mat4 getProjectionMatrix();
     void setAspectRatio(float aspectRatio);
     void rotateView(float pitch, float yaw, float roll);
 
-    void processKeyboard(float deltaTime);
-    void processMouseMovement(float xoffset, float yoffset);
+    void processKeyboard();
+    void processMouseMovement(double xpos, double ypos);
 
+private:
     float aspectRatio;
     float fov;
     
@@ -52,14 +53,19 @@ public:
     glm::vec3 upDefault;
     glm::vec3 rightDefault;
     
-    float yaw;
-    float pitch;
-    float roll;
+    float yaw = 0.f;
+    float pitch = 0.f;
+    float roll = 0.f;
 
     glm::vec3 front;
     glm::vec3 up;
     glm::vec3 right;
 
+    float width;
+    float height;
+    float lastX;
+    float lastY;
+    bool firstMouse = true;
 };
 
 #endif

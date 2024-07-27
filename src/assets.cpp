@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include "stb_image.h"
+#include "utils.h"
 
 TestModel::TestModel() {
     float vertices[] = {
@@ -179,7 +180,7 @@ void ShaderPipline::checkCompileErrors(unsigned int shader, std::string type) {
     }
 }
 
-Camera::Camera(glm::vec3 position, float fov, float aspectRatio) {
+Camera::Camera(glm::vec3 position, float fov,  float width, float height) {
     this->position = position;
 
     this->frontDefault = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -190,8 +191,16 @@ Camera::Camera(glm::vec3 position, float fov, float aspectRatio) {
     this->up = this->upDefault;
     this->right = this->rightDefault;
 
-    this->aspectRatio = aspectRatio;
+    this->width = width;
+    this->height = height;
+    this->lastX = width / 2.0f;
+    this->lastY = height / 2.0f;
+    this->aspectRatio =  width / height;
     this->fov = fov;
+
+    InputCallbackManager::registerCursorPosCallback([this](double xpos, double ypos) {
+        processMouseMovement(xpos, ypos);
+    });
 }
 
 glm::mat4 Camera::getViewMatrix() {
@@ -207,8 +216,8 @@ void Camera::setAspectRatio(float aspectRatio) {
 }
 
 void Camera::rotateView(float pitch, float yaw, float roll) {
-    this->yaw += yaw;
     this->pitch += pitch;
+    this->yaw += yaw;
     this->roll += roll;
 
     front = frontDefault;
@@ -228,7 +237,22 @@ void Camera::rotateView(float pitch, float yaw, float roll) {
     right = glm::normalize(glm::cross(front, up));
 }
 
-void Camera::processMouseMovement(float xoffset, float yoffset) {
+void Camera::processKeyboard() {
+    
+}
+
+void Camera::processMouseMovement(double xposIn, double yposIn) {
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
+    if (firstMouse) { lastX = xpos; lastY = ypos; firstMouse = false; }
+
+    float xoffset = xpos - lastX;
+    float yoffset = ypos - lastY;
+
+    lastX = xpos;
+    lastY = ypos;
+
     float sensitivity = 0.1f;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
