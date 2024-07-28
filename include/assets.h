@@ -2,6 +2,7 @@
 #define ASSETS_H
 
 #include <string>
+#include "utils.h"
 
 class TestModel {
 public:
@@ -31,7 +32,7 @@ private:
     void checkCompileErrors(unsigned int shader, std::string type);
 };
 
-class Camera {
+class Camera : public FrameCallback {
 public:
     Camera(glm::vec3 position, float fov,  float width, float height);
 
@@ -42,6 +43,7 @@ public:
 
     void processKeyboard();
     void processMouseMovement(double xpos, double ypos);
+    void onFrame(GLFWwindow* window) override;
 
 private:
     float aspectRatio;

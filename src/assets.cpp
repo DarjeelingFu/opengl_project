@@ -1,11 +1,9 @@
-#include "pch.h"
-#include "assets.h"
-#include <string>
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include "pch.h"
+#include "assets.h"
 #include "stb_image.h"
-#include "utils.h"
 
 TestModel::TestModel() {
     float vertices[] = {
@@ -198,7 +196,7 @@ Camera::Camera(glm::vec3 position, float fov,  float width, float height) {
     this->aspectRatio =  width / height;
     this->fov = fov;
 
-    InputCallbackManager::registerCursorPosCallback([this](double xpos, double ypos) {
+    CallbackManager::registerCursorPosCallback([this](double xpos, double ypos) {
         processMouseMovement(xpos, ypos);
     });
 }
@@ -258,4 +256,20 @@ void Camera::processMouseMovement(double xposIn, double yposIn) {
     yoffset *= sensitivity;
 
     rotateView(-yoffset, -xoffset, 0.f);
+}
+
+void Camera::onFrame(GLFWwindow* window) {
+    float velocity = 1.f * Clock::deltaTime;
+    glm::vec3 move = glm::vec3(0.f);
+    glm::vec3 direction = glm::vec3(0.f);
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) move.x += 1.f;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) move.x -= 1.f;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) move.y -= 1.f;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) move.y += 1.f;
+    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) move.z += 1.f;
+    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) move.z -= 1.f;
+
+    if(move.x != 0 || move.y != 0 || move.z != 0)
+        direction = glm::normalize(move.x * front + move.y * right + move.z * up);
+    position += direction * velocity;
 }
