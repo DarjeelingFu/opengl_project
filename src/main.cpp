@@ -1,81 +1,77 @@
-#include "pch.h"
-#include <iostream>
 #include "assets.h"
-#include "utils.h"
+#include "context.h"
 
-void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void processInput(GLFWwindow* window);
+class APP {
+public:
+    APP() :
+    context {800, 600, "Hello World"},
+    testModel {glm::translate(glm::mat4(1.0f), glm::vec3(0.f, 0.f, 0.f))},
+    worldAxis {},
+    shaderPipline {"assets/shaders/vs.vs", "assets/shaders/fs.fs"},
+    axisShader {"assets/shaders/axis.vs", "assets/shaders/axis.fs"},
+    camera {glm::vec3(0.f, 0.f, 3.f), 60.f, 800.f, 600.f} {
+        context.onCursorPos([this](double xpos, double ypos) { onCursorPos(xpos, ypos); });
+        context.setInputMode(GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    };
+
+    void run() {
+        while (!context.shouldClose()) {
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            shaderPipline.use();
+            shaderPipline.setMat4("view", camera.getViewMatrix());
+            shaderPipline.setMat4("projection", camera.getProjectionMatrix());
+            testModel.draw(shaderPipline);
+
+            axisShader.use();
+            axisShader.setMat4("view", camera.getViewMatrix());
+            axisShader.setMat4("projection", camera.getProjectionMatrix());
+            worldAxis.draw(axisShader);
+
+            onFrame();
+
+            context.pollEvents();
+            context.swapBuffers();
+        }
+        context.terminate();
+    }
+
+    void onFrame() {
+        glm::vec3 movement = glm::vec3(0.f, 0.f, 0.f);
+        if(context.getKeyState(GLFW_KEY_W) == Context::PRESS) movement.x += 1.f;
+        if(context.getKeyState(GLFW_KEY_S) == Context::PRESS) movement.x -= 1.f;
+        if(context.getKeyState(GLFW_KEY_A) == Context::PRESS) movement.y -= 1.f;
+        if(context.getKeyState(GLFW_KEY_D) == Context::PRESS) movement.y += 1.f;
+        if(context.getKeyState(GLFW_KEY_SPACE) == Context::PRESS) movement.z += 1.f;
+        if(context.getKeyState(GLFW_KEY_LEFT_SHIFT) == Context::PRESS) movement.z -= 1.f;
+        if (movement != glm::vec3(0.f, 0.f, 0.f)) movement = glm::normalize(movement) * 0.03f;
+        camera.movement(movement.x, movement.y, movement.z);
+    }
+
+    void onCursorPos(double xpos, double ypos) {
+        static double lastX = xpos, lastY = ypos;
+        double xoffset = xpos - lastX;
+        double yoffset = ypos - lastY;
+        lastX = xpos;
+        lastY = ypos;
+        float speed = 0.1f;
+
+        camera.rotation(static_cast<float>(-yoffset) * speed, static_cast<float>(-xoffset) * speed, 0.f);
+    }
+
+private:
+    Context context;
+    TestModel testModel;
+    WorldAxis worldAxis;
+
+    ShaderPipline shaderPipline;
+    ShaderPipline axisShader;
+    Camera camera;
+};
 
 int main() {
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    APP app;
+    app.run();
 
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-    
-    int width = 800, height = 600;
-    GLFWwindow* window = glfwCreateWindow(width, height, "OpenGL Project", NULL, NULL);
-    if (window == NULL) {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
-
-    glViewport(0, 0, width, height);
-    glEnable(GL_DEPTH_TEST);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window,CallbackManager::cursorPosCallback);
-    
-    glfwSetKeyCallback(window, CallbackManager::keyCallback);
-
-    TestModel testModel = TestModel();
-    ShaderPipline shaderPipline = ShaderPipline("assets/shaders/vs.vs", "assets/shaders/fs.fs");
-    Camera camera = Camera(glm::vec3(0.f, 0.f, 3.f), 45.f, (float) width, (float) height);
-    CallbackManager callbackManager = CallbackManager();
-    callbackManager.registerFrameCallback(&camera);
-
-    glm::mat4 model = glm::mat4(1.0f);
-
-    while (!glfwWindowShouldClose(window)) {
-        Clock::UpdateDeltaTime();
-
-        processInput(window);
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        shaderPipline.use();
-        shaderPipline.setMat4("model", model);
-        shaderPipline.setMat4("view", camera.getViewMatrix());
-        shaderPipline.setMat4("projection", camera.getProjectionMatrix());
-
-        testModel.draw();
-
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-        callbackManager.callFrameCallbacks(window);
-    }
-
-    glfwTerminate();
     return 0;
-}
-
-void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
-    glViewport(0, 0, width, height);
-}
-
-void processInput(GLFWwindow *window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
-    }
 }

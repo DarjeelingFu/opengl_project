@@ -5,7 +5,9 @@
 #include "assets.h"
 #include "stb_image.h"
 
-TestModel::TestModel() {
+TestModel::TestModel() {}
+
+TestModel::TestModel(glm::mat4 model) : model(model) {
     float vertices[] = {
         -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
@@ -76,14 +78,21 @@ TestModel::TestModel() {
     glEnableVertexAttribArray(1);
 }
 
-void TestModel::draw() {
+void TestModel::draw(ShaderPipline &shader) {
+    shader.setMat4("model", model);
     glBindTexture(GL_TEXTURE_2D, texture);
     glBindVertexArray(VAO);
     // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
-ShaderPipline::ShaderPipline(const char* vertexPath, const char* fragmentPath) {
+void TestModel::setModel(glm::mat4 model) {
+    this->model = model;
+}
+
+ShaderPipline::ShaderPipline() {}
+
+ShaderPipline::ShaderPipline(const char *vertexPath, const char *fragmentPath) {
     std::string vertexCode;
     std::string fragmentCode;
     std::ifstream vShaderFile;
@@ -178,7 +187,9 @@ void ShaderPipline::checkCompileErrors(unsigned int shader, std::string type) {
     }
 }
 
-Camera::Camera(glm::vec3 position, float fov,  float width, float height) {
+Camera::Camera() {}
+
+Camera::Camera(glm::vec3 position, float fov, float width, float height) {
     this->position = position;
 
     this->frontDefault = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -195,10 +206,6 @@ Camera::Camera(glm::vec3 position, float fov,  float width, float height) {
     this->lastY = height / 2.0f;
     this->aspectRatio =  width / height;
     this->fov = fov;
-
-    CallbackManager::registerCursorPosCallback([this](double xpos, double ypos) {
-        processMouseMovement(xpos, ypos);
-    });
 }
 
 glm::mat4 Camera::getViewMatrix() {
@@ -213,63 +220,57 @@ void Camera::setAspectRatio(float aspectRatio) {
     this->aspectRatio = aspectRatio;
 }
 
-void Camera::rotateView(float pitch, float yaw, float roll) {
-    this->pitch += pitch;
-    this->yaw += yaw;
-    this->roll += roll;
+void Camera::rotation(float deltaPitch, float deltaYaw, float deltaRoll) {
+    this->pitch += deltaPitch;
+    this->yaw += deltaYaw;
+    this->roll += deltaRoll;
 
     front = frontDefault;
     up = upDefault;
     right = rightDefault;
-
-    glm::mat4 pitch_rotation = glm::rotate(glm::mat4(1.f), glm::radians(this->pitch), right);
-    front = glm::normalize(pitch_rotation * glm::vec4(front, 1.0f));
-    up = glm::normalize(glm::cross(right, front));
  
-    glm::mat4 yaw_rotation = glm::rotate(glm::mat4(1.f), glm::radians(this->yaw), up);
+    glm::mat4 yaw_rotation = glm::rotate(glm::mat4(1.f), glm::radians(yaw), up);
     front = glm::normalize(yaw_rotation * glm::vec4(front, 1.0f));
     right = glm::normalize(glm::cross(front, up));
+
+    glm::mat4 pitch_rotation = glm::rotate(glm::mat4(1.f), glm::radians(pitch), right);
+    front = glm::normalize(pitch_rotation * glm::vec4(front, 1.0f));
+    up = glm::normalize(glm::cross(right, front));
 
     glm::mat4 roll_rotation = glm::rotate(glm::mat4(1.f), glm::radians(roll), front);
     up = glm::normalize(roll_rotation * glm::vec4(up, 1.0f));
     right = glm::normalize(glm::cross(front, up));
 }
 
-void Camera::processKeyboard() {
-    
+void Camera::movement(float front, float right, float up) {
+    position += front * this->front + right * this->right + up * this->up;
 }
 
-void Camera::processMouseMovement(double xposIn, double yposIn) {
-    float xpos = static_cast<float>(xposIn);
-    float ypos = static_cast<float>(yposIn);
+void Camera::setTarget(glm::vec3 target) {}
 
-    if (firstMouse) { lastX = xpos; lastY = ypos; firstMouse = false; }
+WorldAxis::WorldAxis() {
+    float vertices[] = {
+        0.f, 0.f, 0.f, 1.f, 0.f, 0.f,
+        100.f, 0.f, 0.f, 1.f, 0.f, 0.f,
+        0.f, 0.f, 0.f, 0.f, 1.f, 0.f,
+        0.f, 100.f, 0.f, 0.f, 1.f, 0.f,
+        0.f, 0.f, 0.f, 0.f, 0.f, 1.f,
+        0.f, 0.f, 100.f, 0.f, 0.f, 1.f
+    };
 
-    float xoffset = xpos - lastX;
-    float yoffset = ypos - lastY;
-
-    lastX = xpos;
-    lastY = ypos;
-
-    float sensitivity = 0.1f;
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
-
-    rotateView(-yoffset, -xoffset, 0.f);
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3* sizeof(float)));
+    glEnableVertexAttribArray(1);
 }
 
-void Camera::onFrame(GLFWwindow* window) {
-    float velocity = 1.f * Clock::deltaTime;
-    glm::vec3 move = glm::vec3(0.f);
-    glm::vec3 direction = glm::vec3(0.f);
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) move.x += 1.f;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) move.x -= 1.f;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) move.y -= 1.f;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) move.y += 1.f;
-    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) move.z += 1.f;
-    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) move.z -= 1.f;
-
-    if(move.x != 0 || move.y != 0 || move.z != 0)
-        direction = glm::normalize(move.x * front + move.y * right + move.z * up);
-    position += direction * velocity;
+void WorldAxis::draw(ShaderPipline &shader) {
+    shader.setMat4("model", glm::mat4(1.0f));
+    glBindVertexArray(VAO);
+    glDrawArrays(GL_LINES, 0, 6);
 }

@@ -4,22 +4,11 @@
 #include <string>
 #include "utils.h"
 
-class TestModel {
-public:
-    TestModel();
-    void draw();
-
-private:
-    unsigned int VAO;
-    unsigned int VBO;
-    unsigned int EBO;
-    unsigned int texture;
-};
-
 class ShaderPipline {
 public:
     unsigned int ID;
 
+    ShaderPipline();
     ShaderPipline(const char* vertexPath, const char* fragmentPath);
 
     void use();
@@ -32,18 +21,42 @@ private:
     void checkCompileErrors(unsigned int shader, std::string type);
 };
 
-class Camera : public FrameCallback {
+class TestModel {
 public:
+    TestModel();
+    TestModel(glm::mat4 model);
+    void draw(ShaderPipline &shader);
+    void setModel(glm::mat4 model);
+
+private:
+    unsigned int VAO;
+    unsigned int VBO;
+    unsigned int EBO;
+    unsigned int texture;
+    glm::mat4 model = glm::mat4(1.0f);
+};
+
+class WorldAxis {
+public:
+    WorldAxis();
+    void draw(ShaderPipline &shader);
+
+private:
+    unsigned int VAO;
+    unsigned int VBO;
+};
+
+class Camera {
+public:
+    Camera();
     Camera(glm::vec3 position, float fov,  float width, float height);
 
     glm::mat4 getViewMatrix();
     glm::mat4 getProjectionMatrix();
     void setAspectRatio(float aspectRatio);
-    void rotateView(float pitch, float yaw, float roll);
-
-    void processKeyboard();
-    void processMouseMovement(double xpos, double ypos);
-    void onFrame(GLFWwindow* window) override;
+    void rotation(float pitch, float yaw, float roll);
+    void movement(float front, float right, float up);
+    void setTarget(glm::vec3 target);
 
 private:
     float aspectRatio;
@@ -70,4 +83,15 @@ private:
     bool firstMouse = true;
 };
 
-#endif
+class Assets {
+public:
+    Assets();
+
+    ShaderPipline shaderPipline;
+    ShaderPipline axisShader;
+    TestModel testModel;
+    WorldAxis worldAxis;
+    Camera camera;
+};
+
+#endif // ASSETS_H
