@@ -4,21 +4,18 @@
 #include "pch.h"
 #include <vector>
 #include <functional>
+#include <chrono>
 
-class Clock {
+class Clocker {
 public:
-    static float currentTime;
-    static float lastTime;
-    static float deltaTime;
+    Clocker();
+    void start();
+    void tick();
+    float getDuration();
 
-    static long long frameCnt;
-
-    static void UpdateDeltaTime() {
-        currentTime = static_cast<float>(glfwGetTime());
-        deltaTime = currentTime - lastTime;
-        lastTime = currentTime;
-        frameCnt++;
-    }
+private:
+    std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
+    std::chrono::microseconds duration;
 };
 
 #endif // UTILS_H

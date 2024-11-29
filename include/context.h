@@ -22,6 +22,7 @@ public:
     void registerCallbacks();
     void setInputMode(int mode, int value);
     int shouldClose();
+    void closeWindow();
     void pollEvents();
     void terminate();
     void swapBuffers();
@@ -43,6 +44,8 @@ public:
     void onFrameBufferSize(FrameBufferSizeCallback callback);
 
     int getKeyState(int key);
+    int getWindowWidth();
+    int getWindowHeight();
 
 private:
     int windowWidth = 800, windowHeight = 600;

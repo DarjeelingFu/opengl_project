@@ -33,6 +33,8 @@ int Context::init() {
         return -1;
     }
 
+    glfwSwapInterval(1);
+
     return 0;
 }
 
@@ -48,6 +50,8 @@ void Context::setInputMode(int mode, int value) {
 
 int Context::shouldClose() { return glfwWindowShouldClose(window); }
 
+void Context::closeWindow() { glfwSetWindowShouldClose(window, true); }
+
 void Context::pollEvents() { glfwPollEvents(); }
 
 void Context::registerCallbacks() {
@@ -58,12 +62,11 @@ void Context::registerCallbacks() {
 
 void Context::swapBuffers() { glfwSwapBuffers(window); }
 
-void Context::terminate() { glfwTerminate(); }
+void Context::terminate() { 
+    glfwTerminate(); 
+}
 
 void Context::GLFWKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
-    }
     if(keyCallback) keyCallback(key, scancode, action, mods);
 }
 
@@ -85,3 +88,7 @@ void Context::onFrameBufferSize(FrameBufferSizeCallback callback) { frameBufferS
 int Context::getKeyState(int key) {
     return static_cast<KeyState>(glfwGetKey(window, key));
 }
+
+int Context::getWindowWidth() { return this->windowWidth; }
+
+int Context::getWindowHeight() { return this->windowHeight; }

@@ -53,6 +53,7 @@ public:
 
     glm::mat4 getViewMatrix();
     glm::mat4 getProjectionMatrix();
+    glm::vec3 getPosition();
     void setAspectRatio(float aspectRatio);
     void rotation(float pitch, float yaw, float roll);
     void movement(float front, float right, float up);

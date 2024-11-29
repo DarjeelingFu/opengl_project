@@ -213,8 +213,10 @@ glm::mat4 Camera::getViewMatrix() {
 }
 
 glm::mat4 Camera::getProjectionMatrix() {
-    return glm::perspective(glm::radians(fov), aspectRatio, 0.1f, 100.f);
+    return glm::perspective(glm::radians(fov), aspectRatio, 0.01f, 100.f);
 }
+
+glm::vec3 Camera::getPosition() { return this->position; }
 
 void Camera::setAspectRatio(float aspectRatio) {
     this->aspectRatio = aspectRatio;
@@ -224,6 +226,9 @@ void Camera::rotation(float deltaPitch, float deltaYaw, float deltaRoll) {
     this->pitch += deltaPitch;
     this->yaw += deltaYaw;
     this->roll += deltaRoll;
+
+    if(pitch > 89.0f) pitch = 89.0f;
+    if(pitch < -89.0f) pitch = -89.0f;
 
     front = frontDefault;
     up = upDefault;
@@ -235,7 +240,7 @@ void Camera::rotation(float deltaPitch, float deltaYaw, float deltaRoll) {
 
     glm::mat4 pitch_rotation = glm::rotate(glm::mat4(1.f), glm::radians(pitch), right);
     front = glm::normalize(pitch_rotation * glm::vec4(front, 1.0f));
-    up = glm::normalize(glm::cross(right, front));
+    // up = glm::normalize(glm::cross(right, front));
 
     glm::mat4 roll_rotation = glm::rotate(glm::mat4(1.f), glm::radians(roll), front);
     up = glm::normalize(roll_rotation * glm::vec4(up, 1.0f));
@@ -243,7 +248,9 @@ void Camera::rotation(float deltaPitch, float deltaYaw, float deltaRoll) {
 }
 
 void Camera::movement(float front, float right, float up) {
-    position += front * this->front + right * this->right + up * this->up;
+    // position += front * this->front + right * this->right + up * this->up;
+    glm::vec3 movement_front = glm::normalize(glm::vec3(this->front.x, 0.f, this->front.z));
+    position += front * movement_front + right * this->right + up * this->up;
 }
 
 void Camera::setTarget(glm::vec3 target) {}
