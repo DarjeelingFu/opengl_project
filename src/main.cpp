@@ -51,7 +51,7 @@ public:
 
     void update() {
         glm::vec3 movement = glm::vec3(0.f, 0.f, 0.f);
-        float velocity = 1.0f;
+        float velocity = 10.0f;
         if(context.getKeyState(GLFW_KEY_W) == Context::PRESS) movement.x += 1.f;
         if(context.getKeyState(GLFW_KEY_S) == Context::PRESS) movement.x -= 1.f;
         if(context.getKeyState(GLFW_KEY_A) == Context::PRESS) movement.y -= 1.f;
