@@ -16,12 +16,13 @@ public:
         context.onCursorPos([this](double xpos, double ypos) { onCursorPos(xpos, ypos); });
         context.onKey([this](int key, int scancode, int action, int mods) { onKey(key, scancode, action, mods); });
         context.setInputMode(GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+        xyz.loadFromFile("assets/xyz.obj");
     };
 
     void run() {
         while (!context.shouldClose()) {
             clocker.start();
-
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             shaderPipline.use();
@@ -31,6 +32,7 @@ public:
             for(auto& model : testModels) {
                 model.draw(shaderPipline);
             }
+            xyz.draw(shaderPipline);
 
             axisShader.use();
             axisShader.setMat4("view", camera.getViewMatrix());
@@ -42,8 +44,6 @@ public:
 
             context.pollEvents();
             context.swapBuffers();
-
-            clocker.tick();
 
         }
         context.terminate();
@@ -60,6 +60,7 @@ public:
         if(context.getKeyState(GLFW_KEY_LEFT_SHIFT) == Context::PRESS) movement.z -= 1.f;
         if(movement != glm::vec3(0.f, 0.f, 0.f)) movement = glm::normalize(movement) * velocity * clocker.getDuration();
         camera.movement(movement.x, movement.y, movement.z);
+        xyz.transform.setPosition(camera.getPosition() + camera.front * 4.f);
     }
 
     void onCursorPos(double xpos, double ypos) {
@@ -97,6 +98,7 @@ private:
     Camera camera;
 
     Clocker clocker;
+    MyModel xyz;
 
     bool paused = false;
 

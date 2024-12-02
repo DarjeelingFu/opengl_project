@@ -4,6 +4,9 @@
 #include "pch.h"
 #include "assets.h"
 #include "stb_image.h"
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 TestModel::TestModel() {}
 
@@ -98,8 +101,8 @@ ShaderPipline::ShaderPipline(const char *vertexPath, const char *fragmentPath) {
     std::ifstream vShaderFile;
     std::ifstream fShaderFile;
 
-    vShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
-    fShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+    vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     try 
     {
         vShaderFile.open(vertexPath);
@@ -280,4 +283,111 @@ void WorldAxis::draw(ShaderPipline &shader) {
     shader.setMat4("model", glm::mat4(1.0f));
     glBindVertexArray(VAO);
     glDrawArrays(GL_LINES, 0, 6);
+}
+
+Transform::Transform() {
+    position = glm::vec3(0.f, 0.f, 0.f);
+    rotation = glm::vec3(0.f, 0.f, 0.f);
+    scaling = glm::vec3(1.f, 1.f, 1.f);
+}
+
+Transform::Transform(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) {
+    this->position = position;
+    this->rotation = rotation;
+    this->scaling = scale;
+}
+
+Transform::Transform(glm::vec3 position) : Transform() {
+    this->position = position;
+}
+
+glm::vec3 Transform::getPosition() { return position; }
+
+glm::vec3 Transform::getRotation() { return rotation; }
+
+glm::vec3 Transform::getScale() { return scaling; }
+
+void Transform::setPosition(glm::vec3 position) { this->position = position; }
+
+void Transform::setRotation(glm::vec3 rotation) { this->rotation = rotation; }
+
+void Transform::setScale(glm::vec3 scale) { this->scaling = scale; }
+
+void Transform::translate(glm::vec3 translation) { this->position += translation; }
+
+void Transform::rotate(glm::vec3 rotation) { this->rotation += rotation; }
+
+void Transform::scale(glm::vec3 scaling) { this->scaling *= scaling; }
+
+glm::mat4 Transform::getTransformMatrix() {
+    glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), scaling);
+    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
+    rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f));
+    rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotation.z), glm::vec3(0.f, 0.f, 1.f));
+    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), position);
+    return translationMatrix * rotationMatrix * scaleMatrix;
+}
+
+void MyModel::loadFromFile(const char *path) {
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+
+    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+        std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
+        return;
+    }
+
+    unsigned int numMeshes = scene->mNumMeshes;
+    std::vector<std::vector<float>> meshes(numMeshes);
+    std::vector<std::vector<unsigned int>> meshesIndices(numMeshes);
+
+    for(unsigned int i = 0; i < scene->mNumMeshes; i++) {
+        aiMesh* mesh = scene->mMeshes[i];
+        for(unsigned int j = 0; j < mesh->mNumVertices; j++) {
+            meshes[i].push_back(mesh->mVertices[j].x);
+            meshes[i].push_back(mesh->mVertices[j].y);
+            meshes[i].push_back(mesh->mVertices[j].z);
+        }
+        for(unsigned int j = 0; j < mesh->mNumFaces; j++) {
+            aiFace face = mesh->mFaces[j];
+            for(unsigned int k = 0; k < face.mNumIndices; k++) {
+                meshesIndices[i].push_back(face.mIndices[k]);
+            }
+        }
+    }
+
+    for(int i = 0; i < numMeshes; i++) {
+        std::vector<float>& vertices = meshes[i];
+        std::vector<unsigned int>& indices = meshesIndices[i];
+
+        unsigned int VAO, VBO, EBO;
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(1, &VBO);
+        glGenBuffers(1, &EBO);
+
+        glBindVertexArray(VAO);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+        nIndices.push_back(indices.size());
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        VAOs.push_back(VAO);
+    }
+}
+
+MyModel::MyModel() {}
+
+void MyModel::draw(ShaderPipline &shader) {
+    for(unsigned int i = 0; i < VAOs.size(); i++) {
+        shader.use();
+        shader.setMat4("model", transform.getTransformMatrix());
+        glBindVertexArray(VAOs[i]);
+        glDrawElements(GL_TRIANGLES, nIndices[i], GL_UNSIGNED_INT, 0);
+    }
 }
