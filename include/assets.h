@@ -3,6 +3,7 @@
 
 #include <string>
 #include "utils.h"
+#include <vector>
 
 class ShaderPipline {
 public:
@@ -59,6 +60,10 @@ public:
     void movement(float front, float right, float up);
     void setTarget(glm::vec3 target);
 
+    glm::vec3 front;
+    glm::vec3 up;
+    glm::vec3 right;
+
 private:
     float aspectRatio;
     float fov;
@@ -72,10 +77,6 @@ private:
     float yaw = 0.f;
     float pitch = 0.f;
     float roll = 0.f;
-
-    glm::vec3 front;
-    glm::vec3 up;
-    glm::vec3 right;
 
     float width;
     float height;
@@ -93,6 +94,46 @@ public:
     TestModel testModel;
     WorldAxis worldAxis;
     Camera camera;
+};
+
+class Transform {
+public:
+    Transform();
+    Transform(glm::vec3 position);
+    Transform(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+
+    glm::vec3 getPosition();
+    glm::vec3 getRotation();
+    glm::vec3 getScale();
+
+    void setPosition(glm::vec3 position);
+    void setRotation(glm::vec3 rotation);
+    void setScale(glm::vec3 scale);
+
+    void translate(glm::vec3 translation);
+    void rotate(glm::vec3 rotation);
+    void scale(glm::vec3 scaling);
+
+    glm::vec3 position;
+    glm::vec3 rotation;
+    glm::vec3 scaling;
+
+    glm::mat4 getTransformMatrix();
+
+    private:
+};
+
+class MyModel {
+public:
+    MyModel();
+    Transform transform;
+    void draw(ShaderPipline &shader);
+    void loadFromFile(const char* path);
+
+private:
+    glm::mat4 transformMatrix;
+    std::vector<unsigned int> VAOs;
+    std::vector<unsigned int> nIndices;
 };
 
 #endif // ASSETS_H
