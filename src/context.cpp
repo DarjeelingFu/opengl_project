@@ -92,3 +92,5 @@ int Context::getKeyState(int key) {
 int Context::getWindowWidth() { return this->windowWidth; }
 
 int Context::getWindowHeight() { return this->windowHeight; }
+
+GLFWwindow* Context::getWindow() { return window; }

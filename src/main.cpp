@@ -13,12 +13,12 @@ public:
     shaderPipline {"assets/shaders/vs.vs", "assets/shaders/fs.fs"},
     axisShader {"assets/shaders/axis.vs", "assets/shaders/axis.fs"},
     camera {glm::vec3(0.f, 0.f, 3.f), 60.f, 800.f, 600.f} {
-        context.onCursorPos([this](double xpos, double ypos) { onCursorPos(xpos, ypos); });
+        // context.onCursorPos([this](double xpos, double ypos) { onCursorPos(xpos, ypos); });
         context.onKey([this](int key, int scancode, int action, int mods) { onKey(key, scancode, action, mods); });
         context.setInputMode(GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
         xyz.loadFromFile("assets/xyz.obj");
-        xyz.transform.scale(glm::vec3(0.2f, 0.2f, 0.2f));
+        xyz.transform.setScale(glm::vec3(0.1f, 0.1f, 0.1f));
     };
 
     void run() {
@@ -62,6 +62,10 @@ public:
         if(movement != glm::vec3(0.f, 0.f, 0.f)) movement = glm::normalize(movement) * velocity * clocker.getDuration();
         camera.movement(movement.x, movement.y, movement.z);
         xyz.transform.setPosition(camera.getPosition() + camera.front * 4.f);
+
+        double xpos, ypos;
+        glfwGetCursorPos(context.getWindow(), &xpos, &ypos);
+        onCursorPos(xpos, ypos);
     }
 
     void onCursorPos(double xpos, double ypos) {

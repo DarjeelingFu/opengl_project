@@ -47,6 +47,8 @@ public:
     int getWindowWidth();
     int getWindowHeight();
 
+    GLFWwindow* getWindow();
+
 private:
     int windowWidth = 800, windowHeight = 600;
     std::string windowTitle;
