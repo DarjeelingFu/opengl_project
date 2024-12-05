@@ -18,6 +18,7 @@ public:
         context.setInputMode(GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
         xyz.loadFromFile("assets/xyz.obj");
+        xyz.transform.scale(glm::vec3(0.2f, 0.2f, 0.2f));
     };
 
     void run() {
