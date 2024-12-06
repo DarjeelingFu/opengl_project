@@ -12,8 +12,8 @@ public:
     worldAxis {},
     shaderPipline {"assets/shaders/vs.vs", "assets/shaders/fs.fs"},
     axisShader {"assets/shaders/axis.vs", "assets/shaders/axis.fs"},
+    clocker {90},
     camera {glm::vec3(0.f, 0.f, 3.f), 60.f, 800.f, 600.f} {
-        // context.onCursorPos([this](double xpos, double ypos) { onCursorPos(xpos, ypos); });
         context.onKey([this](int key, int scancode, int action, int mods) { onKey(key, scancode, action, mods); });
         context.setInputMode(GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -23,36 +23,47 @@ public:
 
     void run() {
         while (!context.shouldClose()) {
-            clocker.start();
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            shaderPipline.use();
-            shaderPipline.setMat4("view", camera.getViewMatrix());
-            shaderPipline.setMat4("projection", camera.getProjectionMatrix());
-            testModel.draw(shaderPipline);
-            for(auto& model : testModels) {
-                model.draw(shaderPipline);
-            }
-            xyz.draw(shaderPipline);
-
-            axisShader.use();
-            axisShader.setMat4("view", camera.getViewMatrix());
-            axisShader.setMat4("projection", camera.getProjectionMatrix());
-            worldAxis.draw(axisShader);
-
-            clocker.tick();
-            update();
+            onFrame();
 
             context.pollEvents();
             context.swapBuffers();
-
         }
         context.terminate();
     }
 
+    void onFrame() {
+        clocker.start();
+        
+        draw();
+        
+        clocker.tick();
+        clocker.waitForFrame();
+        
+        clocker.tick();
+        update();
+    }
+
+    void draw() {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        shaderPipline.use();
+        shaderPipline.setMat4("view", camera.getViewMatrix());
+        shaderPipline.setMat4("projection", camera.getProjectionMatrix());
+        testModel.draw(shaderPipline);
+        for(auto& model : testModels) {
+            model.draw(shaderPipline);
+        }
+        xyz.draw(shaderPipline);
+
+        axisShader.use();
+        axisShader.setMat4("view", camera.getViewMatrix());
+        axisShader.setMat4("projection", camera.getProjectionMatrix());
+        worldAxis.draw(axisShader);
+    }
+        
     void update() {
         glm::vec3 movement = glm::vec3(0.f, 0.f, 0.f);
-        float velocity = 10.0f;
+        float velocity = 2.0f;
         if(context.getKeyState(GLFW_KEY_W) == Context::PRESS) movement.x += 1.f;
         if(context.getKeyState(GLFW_KEY_S) == Context::PRESS) movement.x -= 1.f;
         if(context.getKeyState(GLFW_KEY_A) == Context::PRESS) movement.y -= 1.f;
@@ -61,11 +72,12 @@ public:
         if(context.getKeyState(GLFW_KEY_LEFT_SHIFT) == Context::PRESS) movement.z -= 1.f;
         if(movement != glm::vec3(0.f, 0.f, 0.f)) movement = glm::normalize(movement) * velocity * clocker.getDuration();
         camera.movement(movement.x, movement.y, movement.z);
-        xyz.transform.setPosition(camera.getPosition() + camera.front * 4.f);
 
         double xpos, ypos;
         glfwGetCursorPos(context.getWindow(), &xpos, &ypos);
         onCursorPos(xpos, ypos);
+
+        xyz.transform.setPosition(camera.getPosition() + camera.front * 4.f);
     }
 
     void onCursorPos(double xpos, double ypos) {
