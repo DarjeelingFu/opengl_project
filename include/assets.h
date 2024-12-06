@@ -136,4 +136,14 @@ private:
     std::vector<unsigned int> nIndices;
 };
 
+class Skybox : MyModel {
+    public:
+    Skybox(const char* texPath);
+    void draw(ShaderPipline &shader);
+
+    private:
+    unsigned int texture;
+    unsigned int VAO;
+};
+
 #endif // ASSETS_H
