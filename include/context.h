@@ -5,6 +5,11 @@
 #include <string>
 #include <functional>
 
+struct CursorPos {
+    float xpos;
+    float ypos;
+};
+
 class Context {
 public:
     enum KeyState {
@@ -26,6 +31,7 @@ public:
     void pollEvents();
     void terminate();
     void swapBuffers();
+    CursorPos getCursorPos();
 
     static void GLFWKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
     static void GLFWCursorPosCallback(GLFWwindow* window, double xpos, double ypos);

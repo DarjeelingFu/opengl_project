@@ -60,7 +60,7 @@ public:
         axisShader.setMat4("projection", camera.getProjectionMatrix());
         worldAxis.draw(axisShader);
     }
-        
+
     void update() {
         onKey();
         onCursorPos();
@@ -69,15 +69,17 @@ public:
     }
 
     void onCursorPos() {
-        double xpos, ypos;
-        glfwGetCursorPos(context.getWindow(), &xpos, &ypos);
-        static double lastX = xpos, lastY = ypos;
-        double xoffset = xpos - lastX;
-        double yoffset = ypos - lastY;
+        auto cursorPos = context.getCursorPos();
+        float xpos = cursorPos.xpos, ypos = cursorPos.ypos;
+
+        static float lastX = xpos, lastY = ypos;
+        float xoffset = xpos - lastX;
+        float yoffset = ypos - lastY;
         lastX = xpos;
         lastY = ypos;
+
         float speed = 0.1f;
-        camera.rotation(static_cast<float>(-yoffset) * speed, static_cast<float>(-xoffset) * speed, 0.f);
+        camera.rotation(-yoffset * speed, -xoffset * speed, 0.f);
     }
 
     void onKey() {
