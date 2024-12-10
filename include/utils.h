@@ -9,6 +9,7 @@
 class Clocker {
 public:
     Clocker();
+<<<<<<< HEAD
     Clocker(int fromeLimit);
     void start();
     void tick();

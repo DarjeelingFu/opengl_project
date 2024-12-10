@@ -62,6 +62,12 @@ void Context::registerCallbacks() {
 
 void Context::swapBuffers() { glfwSwapBuffers(window); }
 
+CursorPos Context::getCursorPos() { 
+    double xpos, ypos;
+    glfwGetCursorPos(window, &xpos, &ypos);
+    return {static_cast<float>(xpos), static_cast<float>(ypos)};
+}
+
 void Context::terminate() { 
     glfwTerminate(); 
 }
@@ -92,3 +98,5 @@ int Context::getKeyState(int key) {
 int Context::getWindowWidth() { return this->windowWidth; }
 
 int Context::getWindowHeight() { return this->windowHeight; }
+
+GLFWwindow* Context::getWindow() { return window; }
