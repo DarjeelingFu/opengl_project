@@ -18,6 +18,7 @@ public:
         context.setInputMode(GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
         xyz.loadFromFile("assets/xyz.obj");
+        clocker = Clocker(60);
     };
 
     void run() {
@@ -38,13 +39,13 @@ public:
             axisShader.setMat4("view", camera.getViewMatrix());
             axisShader.setMat4("projection", camera.getProjectionMatrix());
             worldAxis.draw(axisShader);
+                        
 
+            clocker.waitForFrame();
             clocker.tick();
             update();
-
             context.pollEvents();
             context.swapBuffers();
-
         }
         context.terminate();
     }
